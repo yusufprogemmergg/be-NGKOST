@@ -1,0 +1,183 @@
+// schema.prisma
+// Datasource & generator
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------
+// MODELS
+// -----------------------
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password      String?              // nullable for OAuth users
+  phone         String?
+  oauthProvider String?
+  oauthId       String?
+  role          Role     @default(user)
+
+  // relations
+  kos           Kos[]            @relation("OwnerKos")
+  comments      Comment[]
+  books         Book[]
+
+  // timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Kos {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  name           String
+  address        String
+  description    String
+  gender         Gender
+  priceFrom      Int?           // bisa dihitung dari kamar, jadi optional
+  priceTo        Int?
+  rules          String[]
+
+  // relations
+  owner          User           @relation("OwnerKos", fields: [userId], references: [id], onDelete: Cascade)
+  rooms          KamarKos[]
+  facilitiesUmum FasilitasUmum[]
+  images         KosImage[]
+  comments       Comment[]
+
+  // timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+model KamarKos {
+  id            Int             @id @default(autoincrement())
+  kosId         Int
+  name          String          // contoh: "Kos A - Kamar Single"
+  totalRooms    Int              @default(1)
+  available     Int              @default(1)
+  pricePerMonth Int
+
+  // relations
+  kos           Kos              @relation(fields: [kosId], references: [id], onDelete: Cascade)
+  images        KamarKosImage[]
+  facilities    Fasilitas[]
+  comments      Comment[]        @relation("KamarKosComments")
+  books         Book[]
+
+  // timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FasilitasUmum {
+  id        Int    @id @default(autoincrement())
+  kosId     Int
+  name      String
+
+  kos       Kos    @relation(fields: [kosId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Fasilitas {
+  id          Int       @id @default(autoincrement())
+  kamarKosId  Int
+  name        String
+
+  kamarKos    KamarKos  @relation(fields: [kamarKosId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model KosImage {
+  id        Int    @id @default(autoincrement())
+  kosId     Int
+  file      String  // bisa berupa url/path
+
+  kos       Kos    @relation(fields: [kosId], references: [id], onDelete: Cascade)
+
+  isMain    Boolean @default(false) // menandai image utama
+  createdAt DateTime @default(now())
+}
+
+model KamarKosImage {
+  id          Int      @id @default(autoincrement())
+  kamarKosId  Int
+  file        String
+
+  kamarKos    KamarKos @relation(fields: [kamarKosId], references: [id], onDelete: Cascade)
+
+  isMain      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+model Comment {
+  id        Int      @id @default(autoincrement())
+  kosId     Int
+  kamarKosId Int?
+  userId    Int
+  content   String
+  reply     String?   // hanya owner bisa balas
+
+  kos       Kos      @relation(fields: [kosId], references: [id], onDelete: Cascade)
+  kamarKos  KamarKos? @relation("KamarKosComments", fields: [kamarKosId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model Book {
+  id          Int        @id @default(autoincrement())
+
+  // Booking untuk kamar kos
+  kamarKosId  Int
+  userId      Int
+  startDate   DateTime
+  endDate     DateTime?
+  status      BookStatus @default(pending)
+  note        String?
+
+  kamarKos    KamarKos   @relation(fields: [kamarKosId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model File {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  mimetype  String
+  createdAt DateTime @default(now())
+}
+
+// -----------------------
+// ENUMS
+// -----------------------
+
+enum Role {
+  owner
+  user
+}
+
+enum Gender {
+  male
+  female
+  all
+}
+
+enum BookStatus {
+  pending
+  accept
+  reject
+}
