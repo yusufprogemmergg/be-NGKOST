@@ -8,8 +8,8 @@ import {
   updateKamarKos,
 } from '../controllers/kamarkosController';
 
-import { authenticate, requireOwner } from '../middleware/authmiddleware';
-import { ensureKamarOwner } from '../middleware/ownership.middleware';
+import { verifyToken} from '../middleware/authmiddleware';
+import { checkRole } from '../middleware/rolemiddleware';
 
 const router = express.Router();
 
@@ -18,10 +18,10 @@ router.get('/', getAllKamarKos);
 router.get('/:id', getKamarKosById);
 
 // Protected: only owner can create kamar under their kos
-router.post('/', authenticate, requireOwner(), createKamarKos);
+router.post('/', verifyToken, createKamarKos);
 
 // update & delete kamar: owner of kos that owns this kamar
-router.put('/:id', authenticate, requireOwner(), ensureKamarOwner, updateKamarKos);
-router.delete('/:id', authenticate, requireOwner(), ensureKamarOwner, deleteKamarKos);
+router.put('/:id', verifyToken, checkRole(["owner"]), updateKamarKos);
+router.delete('/:id', verifyToken, checkRole(["owner"]), deleteKamarKos);
 
 export default router;

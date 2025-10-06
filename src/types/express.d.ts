@@ -9,7 +9,7 @@ declare global {
        */
       user?: {
         id: number;
-        email?: string | null;
+        email: string | null;
         role: 'owner' | 'user';
       };
     }

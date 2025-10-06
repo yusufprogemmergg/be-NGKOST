@@ -1,33 +1,33 @@
 // src/routes/image.routes.ts
 import express from 'express';
 import {
-  uploadKosImages,
-  listKosImages,
+  deleteKamarImage,
   deleteKosImage,
+  listKamarImages,
+  listKosImages,
+  setMainKamarImage,
   setMainKosImage,
   uploadKamarKosImages,
-  listKamarImages,
-  deleteKamarImage,
-  setMainKamarImage
+  uploadKosImages
 } from '../controllers/imageController';
 
-import { authenticate, requireOwner } from '../middleware/authmiddleware';
-import { ensureKosOwner, ensureKamarOwner } from '../middleware/ownership.middleware';
+import { verifyToken } from '../middleware/authmiddleware';
+import { checkRole } from "../middleware/rolemiddleware";
 import { upload } from '../middleware/upload';
 
 const router = express.Router();
 
 /* Kos images */
 // upload (owner only, and ensure owner of kos)
-router.post('/kos/:kosId', authenticate, requireOwner(), ensureKosOwner, upload.array("images", 10), uploadKosImages);
+router.post('/kos/:kosId', verifyToken, checkRole(["owner"]), upload.array("images", 10), uploadKosImages);
 router.get('/kos/:kosId', listKosImages);
-router.put('/kos/main/:id', authenticate, requireOwner(), setMainKosImage); // id = kosImage id
-router.delete('/kos/:id', authenticate, requireOwner(), deleteKosImage);
+router.put('/kos/main/:id', verifyToken, setMainKosImage); // id = kosImage id
+router.delete('/kos/:id', verifyToken, deleteKosImage);
 
 /* Kamar images */
-router.post('/kamar/:kamarKosId', authenticate, requireOwner(), ensureKamarOwner, upload.array("images", 10), uploadKamarKosImages);
+router.post('/kamar/:kamarKosId', verifyToken, checkRole(["owner"]), upload.array("images", 10), uploadKamarKosImages);
 router.get('/kamar/:kamarKosId', listKamarImages);
-router.put('/kamar/main/:id', authenticate, requireOwner(), setMainKamarImage);
-router.delete('/kamar/:id', authenticate, requireOwner(), deleteKamarImage);
+router.put('/kamar/main/:id', verifyToken, setMainKamarImage);
+router.delete('/kamar/:id', verifyToken, deleteKamarImage);
 
 export default router;

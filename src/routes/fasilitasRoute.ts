@@ -1,28 +1,27 @@
 // routes/fasilitas.routes.ts
 import { Router } from "express";
-import { authenticate, requireOwner } from "../middleware/authmiddleware";
-import { ensureKosOwner, ensureKamarOwner } from "../middleware/ownership.middleware";
 import {
-  createFasilitasUmum,
-  getFasilitasUmum,
-  updateFasilitasUmum,
-  deleteFasilitasUmum,
   createFasilitas,
+  createFasilitasUmum,
+  deleteFasilitas,
+  deleteFasilitasUmum,
   getFasilitas,
+  getFasilitasUmum,
   updateFasilitas,
-  deleteFasilitas
+  updateFasilitasUmum
 } from "../controllers/fasilitasController";
-
+import { verifyToken } from "../middleware/authmiddleware";
+import { checkRole } from "../middleware/rolemiddleware";
 const router = Router();
 
-router.post("/kos/:kosId", authenticate, requireOwner(), ensureKosOwner, createFasilitasUmum);
+router.post("/kos/:kosId", verifyToken, checkRole(["owner"]), createFasilitasUmum);
 router.get("/kos/:kosId/fasilitas", getFasilitasUmum);
-router.put("/kos/fasilitas/:id", authenticate, requireOwner(), updateFasilitasUmum);
-router.delete("/kos/fasilitas/:id", authenticate, requireOwner(), deleteFasilitasUmum);
+router.put("/kos/fasilitas/:id", verifyToken, updateFasilitasUmum);
+router.delete("/kos/fasilitas/:id", verifyToken, deleteFasilitasUmum);
 
-router.post("/:kamarKosId/fasilitas", authenticate, requireOwner(), ensureKamarOwner, createFasilitas);
+router.post("/:kamarKosId/fasilitas", verifyToken, checkRole(["owner"]), createFasilitas);
 router.get("/:kamarKosId/fasilitas", getFasilitas);
-router.put("/fasilitas/:id", authenticate, requireOwner(), updateFasilitas);
-router.delete("/fasilitas/:id", authenticate, requireOwner(), deleteFasilitas);
+router.put("/fasilitas/:id", verifyToken, updateFasilitas);
+router.delete("/fasilitas/:id", verifyToken, deleteFasilitas);
 
 export default router;

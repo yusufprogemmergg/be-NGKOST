@@ -30,33 +30,40 @@ async function updateKosPriceRange(kosId: number) {
 
 export const createKos = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id
+    const userId = (req as any).user?.id
     const { name, address, description, gender, rules } = req.body
 
     if (!name || !address || !description || !gender) {
       return res.status(400).json({ message: "Missing required fields" })
     }
 
-    let parsedRules: string[] = []
+    if (!userId) {
+      return res.status(400).json({ error: "User belum login atau userId tidak ditemukan" })
+    }
 
+    // parsing rules (string atau array)
+    let parsedRules: string[] = []
     if (Array.isArray(rules)) {
       parsedRules = rules
     } else if (typeof rules === "string") {
       try {
-        parsedRules = JSON.parse(rules) // kalau string JSON
+        parsedRules = JSON.parse(rules)
       } catch {
-        parsedRules = [rules] // fallback: string biasa jadi 1 item array
+        parsedRules = [rules]
       }
     }
 
+    // ✅ cukup pakai owner.connect saja
     const kos = await prisma.kos.create({
       data: {
-        userId,
         name,
         address,
         description,
         gender,
         rules: parsedRules,
+        owner: {
+          connect: { id: userId }
+        }
       },
     })
 
@@ -66,6 +73,7 @@ export const createKos = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Internal server error" })
   }
 }
+
 
 
 
@@ -82,7 +90,7 @@ export const getAllKos = async (req: Request, res: Response) => {
         take: perPage,
         include: {
           images: true,
-          rooms: { take: 5 }, // preview rooms
+          rooms: { take: 10 }, // preview rooms
           facilitiesUmum: true
         },
         orderBy: { createdAt: 'desc' }
@@ -103,13 +111,24 @@ export const getKosById = async (req: Request, res: Response) => {
     const kos = await prisma.kos.findUnique({
       where: { id },
       include: {
-        owner: { select: { id: true, name: true, email: true, phone: true } },
+        owner: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
         images: true,
         facilitiesUmum: true,
         rooms: {
-          include: { images: true, facilities: true, comments: true, books: true }
-        }
-      }
+          include: {
+            images: true,
+            facilities: true,
+            books: true,
+          },
+        },
+        comments: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
     });
     if (!kos) return res.status(404).json({ message: 'Kos not found' });
     return res.json(kos);

@@ -8,8 +8,8 @@ import {
     updateKos,
 } from '../controllers/kosController';
 
-import { authenticate, requireOwner } from '../middleware/authmiddleware';
-import { ensureKosOwner } from '../middleware/ownership.middleware';
+import { verifyToken} from '../middleware/authmiddleware';
+import { checkRole } from '../middleware/rolemiddleware';
 
 const router = express.Router();
 
@@ -17,8 +17,8 @@ router.get('/', getAllKos);
 router.get('/:id', getKosById);
 
 // proteksi: hanya owner
-router.post('/', authenticate, requireOwner(), createKos);
-router.put('/update/:id', authenticate, requireOwner(), ensureKosOwner, updateKos);
-router.delete('/:id', authenticate, requireOwner(), ensureKosOwner, deleteKos);
+router.post('/', verifyToken,checkRole(["owner"]), createKos);
+router.put('/update/:id', verifyToken, checkRole(["owner"]), updateKos);
+router.delete('/:id', verifyToken, checkRole(["owner"]), deleteKos);
 
 export default router;

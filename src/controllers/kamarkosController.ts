@@ -42,7 +42,7 @@ export const getAllKamarKos = async (req: Request, res: Response) => {
 
     const rooms = await prisma.kamarKos.findMany({
       where,
-      include: { images: true, facilities: true, comments: true }
+      include: { images: true, facilities: true}
     });
 
     return res.json(rooms);
@@ -57,7 +57,7 @@ export const getKamarKosById = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const kamar = await prisma.kamarKos.findUnique({
       where: { id },
-      include: { images: true, facilities: true, comments: true, books: true, kos: true }
+      include: { images: true, facilities: true, books: true, kos: true }
     });
     if (!kamar) return res.status(404).json({ message: 'Kamar not found' });
     return res.json(kamar);

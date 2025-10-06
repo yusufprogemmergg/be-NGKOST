@@ -124,6 +124,7 @@ model Comment {
   kamarKosId Int?
   userId    Int
   content   String
+  rating    Int?     // 1-5
   reply     String?   // hanya owner bisa balas
 
   kos       Kos      @relation(fields: [kosId], references: [id], onDelete: Cascade)

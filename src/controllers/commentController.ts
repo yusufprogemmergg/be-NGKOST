@@ -8,23 +8,64 @@ const prisma = new PrismaClient();
  */
 export const createComment = async (req: Request, res: Response) => {
   try {
-    const { kosId, userId, content } = req.body;
+    const userId = (req as any).user.id // ambil dari JWT middleware
+    const { kosId, rating, content } = req.body
 
-    // pastikan user ada
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.role !== "user") {
-      return res.status(403).json({ message: "Hanya user yang bisa komentar" });
+    console.log("🧠 USER DARI TOKEN:", (req as any).user)
+
+
+    // Validasi field penting
+    if (!kosId || !content) {
+      return res.status(400).json({ message: "kosId dan content wajib diisi" })
     }
 
-    const comment = await prisma.comment.create({
-      data: { kosId, userId, content },
-    });
+    // Pastikan user yang login ada dan rolenya "user"
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user || user.role !== "user") {
+      return res.status(403).json({ message: "Hanya user yang bisa memberi komentar" })
+    }
 
-    res.status(201).json(comment);
+    // Validasi rating (jika diisi)
+    if (rating !== undefined && (rating < 1 || rating > 5)) {
+      return res.status(400).json({ message: "Rating harus antara 1 sampai 5" })
+    }
+
+    // Pastikan kos yang dikomentari ada
+    const kos = await prisma.kos.findUnique({ where: { id: kosId } })
+    if (!kos) {
+      return res.status(404).json({ message: "Kos tidak ditemukan" })
+    }
+
+    // Buat komentar
+    const comment = await prisma.comment.create({
+      data: {
+        kosId,
+        userId,
+        content,
+        rating: rating ?? null, // rating opsional
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    return res.status(201).json({
+      message: "Komentar berhasil ditambahkan",
+      data: comment,
+    })
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error(error)
+    return res.status(500).json({ message: "Internal server error" })
   }
-};
+}
+
+
 
 /**
  * Owner membalas komentar
