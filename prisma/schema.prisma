@@ -21,6 +21,7 @@ model User {
   phone         String?
   oauthProvider String?
   oauthId       String?
+  photo         String?              // URL atau path ke foto profil
   role          Role     @default(user)
 
   // relations
@@ -31,6 +32,8 @@ model User {
   // timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  Notification Notification[]
 }
 
 model Kos {
@@ -118,6 +121,7 @@ model KamarKosImage {
   isMain      Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
+
 model Comment {
   id        Int      @id @default(autoincrement())
   kosId     Int
@@ -144,6 +148,7 @@ model Book {
   userId      Int
   startDate   DateTime
   endDate     DateTime?
+  totalPrice  Int?
   status      BookStatus @default(pending)
   note        String?
 
@@ -153,6 +158,19 @@ model Book {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int      // penerima notifikasi (owner)
+  title       String
+  message     String
+  type        String   // "comment" | "booking" | "reply" | dll
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+}
+
 
 model File {
   id        String   @id @default(uuid())
