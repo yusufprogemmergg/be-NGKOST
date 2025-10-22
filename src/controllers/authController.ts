@@ -197,3 +197,64 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// -------------------- UPGRADE ROLE TO OWNER --------------------
+export const upgradeRoleToOwner = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Ambil token JWT dari header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Token tidak ditemukan atau tidak valid" });
+      return;
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; role: string };
+    const userId = decoded.id;
+
+    // Ambil data tambahan dari body
+    const { name, phone, email, photo } = req.body;
+
+    // Cari user yang login
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      res.status(404).json({ message: "User tidak ditemukan" });
+      return;
+    }
+
+    // Cek apakah sudah owner
+    if (user.role === "owner") {
+      res.status(400).json({ message: "Akun ini sudah menjadi owner" });
+      return;
+    }
+
+    // Update data user + ubah role jadi owner
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: name || user.name,
+        phone: phone || user.phone,
+        email: email || user.email,
+        photo: photo || user.photo || "/images/default-avatar.png",
+        role: "owner",
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        photo: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json({
+      message: "Akun berhasil diupgrade menjadi owner",
+      user: updatedUser,
+    });
+
+  } catch (error: any) {
+    console.error("Upgrade Role Error:", error);
+    res.status(500).json({ message: "Gagal mengubah role user", error: error.message });
+  }
+};
