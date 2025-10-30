@@ -5,7 +5,6 @@ import morgan from 'morgan';
 import { PrismaClient } from '@prisma/client';
 
 // Import route
-import videoRoutes from './routes/uploadRoute';
 import userRoutes from './routes/userRoute';
 import kosRoutes from './routes/kosRoute';
 import kamarRoutes from './routes/kamarkosRoute';
@@ -14,6 +13,7 @@ import imageRoutes from './routes/imageRoute';
 import bookingRoutes from "./routes/bookkosRoute";
 import commentRoutes from "./routes/commentRoute";
 import notifRoutes from "./routes/notifRoute";
+import profilRoute from './routes/profilRoute';
 
 dotenv.config();
 
@@ -37,7 +37,6 @@ app.use(morgan('dev'));
 
 
 app.use('/api/auth', userRoutes);
-app.use('/api/video', videoRoutes);
 app.use('/api/kos', kosRoutes);
 app.use('/api/kamarkos', kamarRoutes);
 app.use('/api/fasility', fasilityRoutes);
@@ -45,6 +44,7 @@ app.use('/api/images', imageRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notifRoutes);
+app.use('/api/profile', profilRoute);
 
 // Cek role user by email
 app.get('/api/auth/check-role', async (req, res) => {
@@ -66,6 +66,8 @@ app.get('/', (req, res) => {
   res.send('API is running ✅');
 });
 
+
+
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
@@ -74,5 +76,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Jalankan pakai `server.listen`, bukan `app.listen`
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(` Server running at http://localhost:${PORT}`);
 });

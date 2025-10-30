@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 export const createComment = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id; // ambil dari JWT middleware
-    const { kosId, rating, content } = req.body;
+    const { kosId, content } = req.body;
 
     console.log("🧠 USER DARI TOKEN:", (req as any).user);
 
@@ -23,11 +23,6 @@ export const createComment = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== "user") {
       return res.status(403).json({ message: "Hanya user yang bisa memberi komentar" });
-    }
-
-    // Validasi rating (jika diisi)
-    if (rating !== undefined && (rating < 1 || rating > 5)) {
-      return res.status(400).json({ message: "Rating harus antara 1 sampai 5" });
     }
 
     // Pastikan kos yang dikomentari ada + ambil owner-nya
@@ -46,7 +41,6 @@ export const createComment = async (req: Request, res: Response) => {
         kosId,
         userId,
         content,
-        rating: rating ?? null,
       },
       include: {
         user: {

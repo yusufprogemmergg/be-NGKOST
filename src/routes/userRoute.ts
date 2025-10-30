@@ -2,7 +2,8 @@ import express from 'express';
 import {
   register,
   login,
-  oauthcallback,
+  oauthRegister,
+  oauthLogin,
   getMe,
   upgradeRoleToOwner
 } from '../controllers/authController';
@@ -13,9 +14,10 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
-router.post('/callback', oauthcallback);
+router.post("/oauth/register", oauthRegister);
+router.post("/oauth/login", oauthLogin);
 router.get('/me',verifyToken, getMe);
-router.post('/register-owner',verifyToken, upgradeRoleToOwner);
+router.put("/register-owner", verifyToken, upgradeRoleToOwner);
 
 
 

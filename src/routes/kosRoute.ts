@@ -5,7 +5,7 @@ import {
     deleteKos,
     getAllKos,
     getKosById,
-    updateKos,
+    updateKos
 } from '../controllers/kosController';
 
 import { verifyToken} from '../middleware/authmiddleware';

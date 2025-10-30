@@ -122,3 +122,54 @@ export const deleteKamarKos = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const getKamarKosStatsByOwner = async (req: Request, res: Response) => {
+  try {
+    const ownerId = (req as any).user?.id; // ambil dari verifyToken middleware
+
+    if (!ownerId) {
+      return res.status(401).json({ message: "Unauthorized - owner not found in token" });
+    }
+
+    // Ambil semua kos milik owner
+    const kosList = await prisma.kos.findMany({
+      where: { userId: Number(ownerId) }, // sesuaikan nama field
+      select: { id: true },
+    });
+
+    if (kosList.length === 0) {
+      return res.status(404).json({ message: "Owner does not have any kos" });
+    }
+
+    const kosIds = kosList.map(k => k.id);
+
+    // Ambil semua kamar dari kos-kos tersebut
+    const kamarList = await prisma.kamarKos.findMany({
+      where: { kosId: { in: kosIds } },
+      select: { totalRooms: true, available: true },
+    });
+
+    if (kamarList.length === 0) {
+      return res.status(404).json({ message: "No rooms found for owner's kos" });
+    }
+
+    // Hitung total kamar, tersedia, terisi
+    const totalRooms = kamarList.reduce((acc, k) => acc + (k.totalRooms ?? 0), 0);
+    const availableRooms = kamarList.reduce((acc, k) => acc + (k.available ?? 0), 0);
+    const occupiedRooms = totalRooms - availableRooms;
+
+    return res.json({
+      ownerId,
+      totalRooms,
+      availableRooms,
+      occupiedRooms,
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+

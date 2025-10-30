@@ -1,5 +1,6 @@
-// schema.prisma
-// Datasource & generator
+// -----------------------
+// DATASOURCE & GENERATOR
+// -----------------------
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -14,26 +15,46 @@ generator client {
 // -----------------------
 
 model User {
-  id            Int      @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   name          String
-  email         String   @unique
-  password      String?              // nullable for OAuth users
+  email         String        @unique
+  password      String?       // nullable for OAuth users
   phone         String?
   oauthProvider String?
   oauthId       String?
-  photo         String?              // URL atau path ke foto profil
-  role          Role     @default(user)
+  role          Role          @default(user)
 
   // relations
-  kos           Kos[]            @relation("OwnerKos")
+  profile       Profile?
+  kos           Kos[]         @relation("OwnerKos")
   comments      Comment[]
   books         Book[]
+  Notification  Notification[]
 
   // timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
 
-  Notification Notification[]
+model Profile {
+  id                Int       @id @default(autoincrement())
+  userId            Int       @unique
+
+  photo             String?   // URL atau path ke foto profil
+  fullName          String
+  gender            Gender?
+  birthDate         DateTime?
+  occupation        String?   // pekerjaan
+  institution       String?   // nama instansi/kampus/sekolah
+  cityOrigin        String?   // kota asal
+  status            String?   // contoh: mahasiswa, karyawan, freelancer, dll
+  lastEducation     String?   // pendidikan terakhir
+  emergencyContact  String?   // nomor kontak darurat (+62...)
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model Kos {
@@ -43,37 +64,34 @@ model Kos {
   address        String
   description    String
   gender         Gender
-  priceFrom      Int?           // bisa dihitung dari kamar, jadi optional
+  priceFrom      Int?
   priceTo        Int?
   rules          String[]
 
-  // relations
   owner          User           @relation("OwnerKos", fields: [userId], references: [id], onDelete: Cascade)
   rooms          KamarKos[]
   facilitiesUmum FasilitasUmum[]
   images         KosImage[]
   comments       Comment[]
 
-  // timestamps
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
 model KamarKos {
   id            Int             @id @default(autoincrement())
   kosId         Int
-  name          String          // contoh: "Kos A - Kamar Single"
+  name          String
   totalRooms    Int              @default(1)
   available     Int              @default(1)
   pricePerMonth Int
 
-  // relations
   kos           Kos              @relation(fields: [kosId], references: [id], onDelete: Cascade)
   images        KamarKosImage[]
   facilities    Fasilitas[]
   comments      Comment[]        @relation("KamarKosComments")
   books         Book[]
 
-  // timestamps
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -103,11 +121,11 @@ model Fasilitas {
 model KosImage {
   id        Int    @id @default(autoincrement())
   kosId     Int
-  file      String  // bisa berupa url/path
+  file      String
 
   kos       Kos    @relation(fields: [kosId], references: [id], onDelete: Cascade)
 
-  isMain    Boolean @default(false) // menandai image utama
+  isMain    Boolean @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -123,27 +141,23 @@ model KamarKosImage {
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
-  kosId     Int
+  id         Int       @id @default(autoincrement())
+  kosId      Int
   kamarKosId Int?
-  userId    Int
-  content   String
-  rating    Int?     // 1-5
-  reply     String?   // hanya owner bisa balas
+  userId     Int
+  content    String
+  reply      String?
 
-  kos       Kos      @relation(fields: [kosId], references: [id], onDelete: Cascade)
-  kamarKos  KamarKos? @relation("KamarKosComments", fields: [kamarKosId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kos        Kos       @relation(fields: [kosId], references: [id], onDelete: Cascade)
+  kamarKos   KamarKos? @relation("KamarKosComments", fields: [kamarKosId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
-
 
 model Book {
   id          Int        @id @default(autoincrement())
-
-  // Booking untuk kamar kos
   kamarKosId  Int
   userId      Int
   startDate   DateTime
@@ -161,16 +175,15 @@ model Book {
 
 model Notification {
   id          Int      @id @default(autoincrement())
-  userId      Int      // penerima notifikasi (owner)
+  userId      Int
   title       String
   message     String
-  type        String   // "comment" | "booking" | "reply" | dll
+  type        String
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   user        User     @relation(fields: [userId], references: [id])
 }
-
 
 model File {
   id        String   @id @default(uuid())

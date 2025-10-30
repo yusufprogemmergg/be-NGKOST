@@ -6,6 +6,7 @@ import {
   getAllKamarKos,
   getKamarKosById,
   updateKamarKos,
+  getKamarKosStatsByOwner
 } from '../controllers/kamarkosController';
 
 import { verifyToken} from '../middleware/authmiddleware';
@@ -23,5 +24,6 @@ router.post('/', verifyToken, createKamarKos);
 // update & delete kamar: owner of kos that owns this kamar
 router.put('/:id', verifyToken, checkRole(["owner"]), updateKamarKos);
 router.delete('/:id', verifyToken, checkRole(["owner"]), deleteKamarKos);
+router.get('/stats', verifyToken, checkRole(["owner"]), getKamarKosStatsByOwner);
 
 export default router;
